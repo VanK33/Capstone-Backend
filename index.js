@@ -1,5 +1,5 @@
-import express from "express";
-import cors from "cors";
+const express = require("express");
+const cors = require("cors");
 require("dotenv").config();
 const app = express();
 
@@ -11,11 +11,14 @@ app.use(express.json());
 // A route to user Auth
 // A route to userManagement
 // A route to pageSelection
+const publicRoute = require("./routes/public-routes");
+
+app.use("/public", publicRoute);
 
 app.get("", (_req, res) => {
   res.send("Welcome to PickUrDish server");
 });
 
 app.listen(PORT, () => {
-  console.log("This is an express server, hosting at http://localhost:5050");
+  console.log(`This is an express server, hosting at http://localhost:${PORT}`);
 });
