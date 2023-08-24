@@ -9,7 +9,7 @@ exports.seed = async function (knex) {
     {
       id: 1,
       recipe_name: "Lemon Garlic Chicken",
-      contriutor_id: 1,
+      contributor_id: 1,
       youtube_link: "https://www.youtube.com/watch?v=jvQKp7pVhF0",
       secondary_link:
         "https://www.themediterraneandish.com/lemon-garlic-chicken/",
