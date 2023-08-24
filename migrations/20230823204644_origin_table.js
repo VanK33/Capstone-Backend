@@ -5,7 +5,7 @@
 exports.up = function (knex) {
   return knex.schema.createTable("origins", (table) => {
     table.increments("id");
-    table.string("origin");
+    table.string("origin").unique();
   });
 };
 

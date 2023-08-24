@@ -10,7 +10,6 @@ exports.up = function (knex) {
     table.string("youtube_link").notNullable();
     table.string("secondary_link");
     table.integer("meat_id").unsigned().references("meat.id");
-    table.string("country_of_origin").notNullable();
     table.integer("likes").notNullable();
     // future plan: Add comments for each recipe
     table.timestamp("created_at").defaultTo(knex.fn.now());
