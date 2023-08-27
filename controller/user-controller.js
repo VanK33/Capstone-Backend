@@ -208,13 +208,19 @@ const deleteRecipe = async (req, res) => {
 
   try {
     const recipes = await fetchRecipesByUser(userId);
-    const recipeToUpdate = recipes.find((recipe) => recipe.id === recipeId);
+    const recipeToDelete = recipes.find((recipe) => recipe.id === recipeId);
 
-    if (!recipeToUpdate) {
+    if (!recipeToDelete) {
       return res.status(404).json({ error: "Recipe not found" });
     }
 
-    await knex("recipes").where("id", recipeId).del();
+    await knex.transaction(async (trx) => {
+      await trx("procedures").where("recipe_id", recipeId).delete();
+      await trx("recipe_tastes").where("recipe_id", recipeId).delete();
+      await trx("recipes_origins").where("recipe_id", recipeId).delete();
+      await trx("recipe_ingredients").where("recipe_id", recipeId).delete();
+      await trx("recipes").where("id", recipeId).delete();
+    });
 
     res.status(204).json({ message: "Recipe deleted" });
   } catch (error) {
