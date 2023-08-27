@@ -1,6 +1,6 @@
 const knex = require("knex")(require("../knexfile"));
 
-// get
+// get // TODO: need update for fetch from all tables
 const getUserRecipes = async (req, res) => {
   //   console.log(req.params.userId);
   //   res.status(200).json(req.params.userId);
@@ -93,7 +93,7 @@ const addRecipe = async (req, res) => {
         trx
       );
 
-      // Handle origins
+      // Handle origins with transaction instance (trx)
       await handleAssociations(
         recipeData.origins,
         "origins",
@@ -103,7 +103,7 @@ const addRecipe = async (req, res) => {
         trx
       );
 
-      // Handle tastes
+      // Handle tastes with transaction instance (trx)
       await handleAssociations(
         recipeData.tastes,
         "tastes",
@@ -201,7 +201,7 @@ const updateRecipe = async (req, res) => {
   }
 };
 
-// delete
+// delete  //TODO: need to update to detele from all tables
 const deleteRecipe = async (req, res) => {
   const userId = req.params.userId;
   const recipeId = req.params.recipeId;
@@ -333,11 +333,11 @@ const handleOriginsUpdate = async (trx, recipeId, newOrigins) => {
 
   const newOriginIds = await Promise.all(
     newOrigins.map(async (orgOrigin) => {
-      const origin = await trx("origins").where("origin", orgOrigin).first(); // Adjusted here
+      const origin = await trx("origins").where("origin", orgOrigin).first();
       if (!origin) {
         const [newId] = await trx("origins")
           .insert({ origin: orgOrigin })
-          .returning("id"); // Adjusted here
+          .returning("id");
         return newId;
       }
       return origin.id;
