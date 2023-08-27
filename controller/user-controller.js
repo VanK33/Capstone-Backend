@@ -14,6 +14,7 @@ const getUserRecipes = async (req, res) => {
   }
 };
 
+// add
 const addRecipe = async (req, res) => {
   const userId = req.params.userId;
   const recipeData = req.body;
@@ -22,11 +23,27 @@ const addRecipe = async (req, res) => {
 
   try {
     await knex.transcation(async (trx) => {
+      // find or add meat
+      let meatId;
+      if (recipeData.meat_name) {
+        const meatExists = await trx("meat")
+          .where("meat_name", recipeData.meat_name)
+          .first();
+        if (!meatExists) {
+          [meatId] = await trx("meat")
+            .insert({ meat_name: recipeData.meat_name })
+            .returning("id");
+        } else {
+          meatId = meatExists.id;
+        }
+      }
+
       const [newRecipeId] = await trx("recipes").insert({
         recipe_name: recipeData.recipe_name,
         contributor_id: userId,
         youtube_link: recipeData.youtube_link,
         secondary_link: recipeData.secondary_link,
+        meat_id: meatId,
         likes: 0,
       });
 
@@ -119,32 +136,67 @@ const updateRecipe = async (req, res) => {
   const userId = req.params.userId;
   const recipeId = req.params.recipeId;
 
+  const {
+    recipe_name,
+    youtube_link,
+    secondary_link,
+    meat_id,
+    ingredients,
+    origins,
+    tastes,
+    ...rest
+  } = req.body;
+
   // back-end validation //
   if (
     !req.body.recipe_name ||
     !req.body.youtube_link ||
     !req.body.secondary_link ||
-    !req.body.meat_id
-    // !req.body.procedures_id
-    // ask how to check other reference data errors
+    !req.body.meat_id ||
+    !req.body.ingredients ||
+    !req.body.origins ||
+    !req.body.tastes ||
+    !req.body.procedures
   ) {
     return res
       .status(400)
-      .send("Please provide all information for the warehouse in the request");
+      .send("Please provide all necessary information in the request");
   }
 
   try {
-    const recipes = await fetchRecipesByUser(userId);
-    const recipeToUpdate = recipes.find((recipe) => recipe.id === recipeId);
+    const recipeToUpdate = await knex("recipes")
+      .where({ id: recipeId, contributor_id: userId })
+      .first();
 
     if (!recipeToUpdate) {
       return res.status(404).json({ error: "Recipe not found" });
     }
 
-    await knex("recipes").where("id", recipeId).update(req.body);
+    await knex.transaction(async (trx) => {
+      // Handle ingredients association
+      await handleIngredientsUpdate(trx, recipeId, req.body.ingredients);
+      // Handle Origin Association
+      await handleOriginsUpdate(trx, recipeId, req.body.origins);
+      // Handle Tastes Association
+      await handleTastesUpdate(trx, recipeId, req.body.tastes);
+      // Handle Procedures Association
+      await handleProceduresUpdate(trx, recipeId, req.body.procedures);
+
+      await trx("recipes")
+        .where("id", recipeId)
+        .update({
+          recipe_name,
+          youtube_link,
+          secondary_link,
+          meat_id,
+          updated_at: new Date().toISOString(),
+          ...rest,
+        });
+    });
 
     res.status(200).json({ message: "Recipe updated successfully" });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: `Erro updating recipe ${recipeId}` });
   }
 };
@@ -222,6 +274,155 @@ const fetchRecipesByUser = async (userId) => {
   );
 
   return recipeWithDetails;
+};
+
+const handleIngredientsUpdate = async (trx, recipeId, newIngredients) => {
+  const currentIngredients = await trx("recipe_ingredient")
+    .where("recipes_id", recipeId)
+    .select("ingredients_id");
+
+  const currentIngredientIds = currentIngredients.map(
+    (ing) => ing.ingredients_id
+  );
+
+  const newIngredientIds = await Promise.all(
+    newIngredients.map(async (ingName) => {
+      const ingredient = await trx("ingredients")
+        .where("ingredient_name", ingName)
+        .first();
+      if (!ingredient) {
+        const [newId] = await trx("ingredients")
+          .insert({ ingredient_name: ingName })
+          .returning("id");
+        return newId;
+      }
+      return ingredient.id;
+    })
+  );
+
+  const ingredientsToAdd = newIngredientIds.filter(
+    (id) => !currentIngredientIds.includes(id)
+  );
+  const ingredientsToRemove = currentIngredientIds.filter(
+    (id) => !newIngredientIds.includes(id)
+  );
+
+  if (ingredientsToAdd.length) {
+    await trx("recipe_ingredient").insert(
+      ingredientsToAdd.map((ingId) => ({
+        recipes_id: recipeId,
+        ingredients_id: ingId,
+      }))
+    );
+  }
+
+  if (ingredientsToRemove.length) {
+    await trx("recipe_ingredient")
+      .where("recipes_id", recipeId)
+      .whereIn("ingredients_id", ingredientsToRemove)
+      .delete();
+  }
+};
+
+const handleOriginsUpdate = async (trx, recipeId, newOrigins) => {
+  const currentOrigins = await trx("recipe_origins")
+    .where("recipes_id", recipeId)
+    .select("origins_id");
+
+  const currentOriginIds = currentOrigins.map((org) => org.origins_id);
+
+  const newOriginIds = await Promise.all(
+    newOrigins.map(async (orgOrigin) => {
+      const origin = await trx("origins").where("origin", orgOrigin).first(); // Adjusted here
+      if (!origin) {
+        const [newId] = await trx("origins")
+          .insert({ origin: orgOrigin })
+          .returning("id"); // Adjusted here
+        return newId;
+      }
+      return origin.id;
+    })
+  );
+
+  const originsToAdd = newOriginIds.filter(
+    (id) => !currentOriginIds.includes(id)
+  );
+  const originsToRemove = currentOriginIds.filter(
+    (id) => !newOriginIds.includes(id)
+  );
+
+  if (originsToAdd.length) {
+    await trx("recipe_origins").insert(
+      originsToAdd.map((orgId) => ({
+        recipes_id: recipeId,
+        origins_id: orgId,
+      }))
+    );
+  }
+
+  if (originsToRemove.length) {
+    await trx("recipe_origins")
+      .where("recipes_id", recipeId)
+      .whereIn("origins_id", originsToRemove)
+      .delete();
+  }
+};
+
+const handleTastesUpdate = async (trx, recipeId, newTastes) => {
+  const currentTastes = await trx("recipe_tastes")
+    .where("recipes_id", recipeId)
+    .select("tastes_id");
+
+  const currentTastesIds = currentTastes.map((tas) => tas.tastes_id);
+
+  const newTasteIds = await Promise.all(
+    newTastes.map(async (tasTasteName) => {
+      const taste = await trx("tastes")
+        .where("taste_name", tasTasteName)
+        .first();
+      if (!taste) {
+        const [newId] = await trx("tastes")
+          .insert({ taste_name: tasTasteName })
+          .returning("id");
+        return newId;
+      }
+      return taste.id;
+    })
+  );
+
+  const tastesToAdd = newTasteIds.filter(
+    (id) => !currentTastesIds.includes(id)
+  );
+  const tastesToRemove = currentTastesIds.filter(
+    (id) => !newTasteIds.includes(id)
+  );
+
+  if (tastesToAdd.length) {
+    await trx("recipe_tastes").insert(
+      tastesToAdd.map((tasId) => ({
+        recipes_id: recipeId,
+        tastes_id: tasId,
+      }))
+    );
+  }
+
+  if (tastesToRemove.length) {
+    await trx("recipe_tastes")
+      .where("recipes_id", recipeId)
+      .whereIn("tastes_id", tastesToRemove)
+      .delete();
+  }
+};
+
+const handleProceduresUpdate = async (trx, recipeId, newProcedures) => {
+  await trx("procedures").where("recipe_id", recipeId).delete();
+
+  const proceduresToInsert = newProcedures.map((procedure) => ({
+    procedure_content: procedure.content,
+    recipe_id: recipeId,
+  }));
+
+  await trx("procedures").insert(proceduresToInsert);
 };
 
 module.exports = {
