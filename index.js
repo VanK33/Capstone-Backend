@@ -10,10 +10,12 @@ app.use(express.json());
 
 // A route to user Auth
 // A route to userManagement
+const userRoute = require("./routes/user-routes");
 // A route to pageSelection
 const publicRoute = require("./routes/public-routes");
 
 app.use("/public", publicRoute);
+app.use("/user", userRoute);
 
 app.get("", (_req, res) => {
   res.send("Welcome to PickUrDish server");
