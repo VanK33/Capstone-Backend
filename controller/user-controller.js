@@ -1,6 +1,6 @@
 const knex = require("knex")(require("../knexfile"));
 
-// TODO: a GET function for all recipes of this specific user
+// get
 const getUserRecipes = async (req, res) => {
   //   console.log(req.params.userId);
   //   res.status(200).json(req.params.userId);
@@ -10,10 +10,167 @@ const getUserRecipes = async (req, res) => {
     const recipes = await fetchRecipesByUser(userId);
     res.status(200).json(recipes);
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    res.status(400).json({ message: `Error accesss user ${userId} recipes` });
   }
 };
 
+const addRecipe = async (req, res) => {
+  const userId = req.params.userId;
+  const recipeData = req.body;
+
+  // some forms of validations
+
+  try {
+    await knex.transcation(async (trx) => {
+      const [newRecipeId] = await trx("recipes").insert({
+        recipe_name: recipeData.recipe_name,
+        contributor_id: userId,
+        youtube_link: recipeData.youtube_link,
+        secondary_link: recipeData.secondary_link,
+        likes: 0,
+      });
+
+      // Function to handle many-to-many associations
+      async function handleAssociations(
+        data,
+        table,
+        assocTable,
+        dataColumn,
+        assocDataColumn,
+        recipeIdColumn = "recipes_id",
+        trx
+      ) {
+        const names = data.map((item) => item.name);
+        const existingData = await trx(table)
+          .whereIn(dataColumn, names)
+          .select();
+        const existingNames = existingData.map((item) => item[dataColumn]);
+
+        const newDataNames = names.filter(
+          (name) => !existingNames.includes(name)
+        );
+        const newDataIds = await trx(table)
+          .insert(newDataNames.map((name) => ({ [dataColumn]: name })))
+          .returning("id");
+
+        const existingAssocs = existingData.map((item) => ({
+          [recipeIdColumn]: newRecipeId,
+          [assocDataColumn]: item.id,
+        }));
+
+        const newAssocs = newDataIds.map((dataId) => ({
+          [recipeIdColumn]: newRecipeId,
+          [assocDataColumn]: dataId,
+        }));
+
+        await trx(assocTable).insert([...existingAssocs, ...newAssocs]);
+      }
+
+      // Handle ingredients with transaction instance (trx)
+      await handleAssociations(
+        recipeData.ingredients,
+        "ingredients",
+        "recipe_ingredient",
+        "ingredient_name",
+        "ingredients_id",
+        trx
+      );
+
+      // Handle origins
+      await handleAssociations(
+        recipeData.origins,
+        "origins",
+        "recipe_origins",
+        "origin_name",
+        "origins_id",
+        trx
+      );
+
+      // Handle tastes
+      await handleAssociations(
+        recipeData.tastes,
+        "tastes",
+        "recipes_tastes",
+        "taste_name",
+        "tastes_id",
+        trx
+      );
+
+      // Handle procedures (many-to-one association with recipe)
+      if (recipeData.procedures && recipeData.procedures.length) {
+        const proceduresToInsert = recipeData.procedures.map((proc) => ({
+          description: proc,
+          recipe_id: newRecipeId,
+        }));
+        await knex("procedures").insert(proceduresToInsert);
+      }
+      return;
+    });
+
+    res.status(201).json({ message: "recipe uploaded successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ message: `Error uploading recipe` });
+  }
+};
+
+// update
+const updateRecipe = async (req, res) => {
+  const userId = req.params.userId;
+  const recipeId = req.params.recipeId;
+
+  // back-end validation //
+  if (
+    !req.body.recipe_name ||
+    !req.body.youtube_link ||
+    !req.body.secondary_link ||
+    !req.body.meat_id
+    // !req.body.procedures_id
+    // ask how to check other reference data errors
+  ) {
+    return res
+      .status(400)
+      .send("Please provide all information for the warehouse in the request");
+  }
+
+  try {
+    const recipes = await fetchRecipesByUser(userId);
+    const recipeToUpdate = recipes.find((recipe) => recipe.id === recipeId);
+
+    if (!recipeToUpdate) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+
+    await knex("recipes").where("id", recipeId).update(req.body);
+
+    res.status(200).json({ message: "Recipe updated successfully" });
+  } catch (error) {
+    res.status(400).json({ message: `Erro updating recipe ${recipeId}` });
+  }
+};
+
+// delete
+const deleteRecipe = async (req, res) => {
+  const userId = req.params.userId;
+  const recipeId = req.params.recipeId;
+
+  try {
+    const recipes = await fetchRecipesByUser(userId);
+    const recipeToUpdate = recipes.find((recipe) => recipe.id === recipeId);
+
+    if (!recipeToUpdate) {
+      return res.status(404).json({ error: "Recipe not found" });
+    }
+
+    await knex("recipes").where("id", recipeId).del();
+
+    res.status(204).json({ message: "Recipe deleted" });
+  } catch (error) {
+    res.status(400).json({ message: `Error deleting recipe ${recipeId}` });
+  }
+};
+
+// functionality
 const fetchRecipesByUser = async (userId) => {
   const recipes = await knex("recipes").where("contributor_id", userId);
 
@@ -69,4 +226,7 @@ const fetchRecipesByUser = async (userId) => {
 
 module.exports = {
   getUserRecipes,
+  addRecipe,
+  updateRecipe,
+  deleteRecipe,
 };
