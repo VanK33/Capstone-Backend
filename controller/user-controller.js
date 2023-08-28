@@ -1,6 +1,8 @@
 const knex = require("knex")(require("../knexfile"));
 
-// get // TODO: need update for fetch from all tables
+// TODO for future2: Add displaying comments for get
+
+// get
 const getUserRecipes = async (req, res) => {
   //   console.log(req.params.userId);
   //   res.status(200).json(req.params.userId);
@@ -19,6 +21,7 @@ const getUserRecipes = async (req, res) => {
   }
 };
 
+// TODO for future2: check add/update/detele function as well
 // add
 const addRecipe = async (req, res) => {
   const userId = req.params.userId;
@@ -232,6 +235,8 @@ const deleteRecipe = async (req, res) => {
     res.status(400).json({ message: `Error deleting recipe ${recipeId}` });
   }
 };
+
+// TODO for future3: add deleting comment option
 
 // functionality
 const fetchRecipesByUser = async (userId) => {

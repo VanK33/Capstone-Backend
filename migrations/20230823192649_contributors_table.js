@@ -6,7 +6,8 @@ exports.up = function (knex) {
   return knex.schema.createTable("contributors", (table) => {
     table.increments("id").primary();
     table.string("contributor_name").notNullable();
-    // table.integer("recipe_id").unsigned().references("recipe.id");
+    table.string("username").unique().notNullable();
+    table.string("hashed_password").notNullable();
     //maybe some other user assoicated details, can be added later
   });
 };
