@@ -1,6 +1,5 @@
 const knex = require("knex")(require("../knexfile"));
 
-//TODO: API to get List of All Recipes
 const getRecipeList = (req, res) => {
   // Step 1: Get distinct recipe IDs
   knex("recipes")
@@ -18,6 +17,21 @@ const getRecipeList = (req, res) => {
     .catch((error) => {
       res.status(400).send(`Error retrieving recipes: ${error}`);
     });
+};
+
+const editRecipeLike = async (req, res) => {
+  const recipeId = req.params.recipeId;
+
+  try {
+    await knex("recipes").where("id", recipeId).increment("likes", 1);
+
+    const updatedRecipe = await knex("recipes").where("id", recipeId).first();
+
+    res.status(200).json(updatedRecipe);
+  } catch (error) {
+    console.log("Error incrementing like:", error);
+    res.status(400).send(`Error incrementing likes for recipe ${recipeId}`);
+  }
 };
 
 const fetchRecipeDetails = async (id) => {
@@ -68,4 +82,5 @@ const fetchRecipeDetails = async (id) => {
 
 module.exports = {
   getRecipeList,
+  editRecipeLike,
 };
