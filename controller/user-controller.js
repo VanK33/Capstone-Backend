@@ -7,6 +7,11 @@ const getUserRecipes = async (req, res) => {
   const userId = req.params.userId;
 
   try {
+    const userExists = await knex("contributors").where("id", userId).first();
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
     const recipes = await fetchRecipesByUser(userId);
     res.status(200).json(recipes);
   } catch (error) {
@@ -201,7 +206,7 @@ const updateRecipe = async (req, res) => {
   }
 };
 
-// delete  //TODO: need to update to detele from all tables
+// delete
 const deleteRecipe = async (req, res) => {
   const userId = req.params.userId;
   const recipeId = req.params.recipeId;
@@ -254,18 +259,18 @@ const fetchRecipesByUser = async (userId) => {
           "ingredients.id"
         )
         .where("recipe_ingredient.recipes_id", recipeDetails.id)
-        .select("ingredients.ingredient_name");
+        .pluck("ingredients.ingredient_name");
 
       // Fetch associated procedures
       recipeDetails.procedures = await knex("procedures")
         .where("procedures.recipes_id", recipeDetails.id)
-        .select("procedure_steps");
+        .pluck("procedure_steps");
 
       // Fetch associated origins
       recipeDetails.origins = await knex("recipes_origins")
         .join("origins", "recipes_origins.origins_id", "=", "origins.id")
         .where("recipes_origins.recipes_id", recipeDetails.id)
-        .select("origins.origin");
+        .pluck("origins.origin");
 
       // Fetch associated meat using direct reference from recipes to meats
       if (recipeDetails.meat_id) {
@@ -282,6 +287,7 @@ const fetchRecipesByUser = async (userId) => {
   return recipeWithDetails;
 };
 
+// helper funciton - separation of concerns
 const handleIngredientsUpdate = async (trx, recipeId, newIngredients) => {
   const currentIngredients = await trx("recipe_ingredient")
     .where("recipes_id", recipeId)

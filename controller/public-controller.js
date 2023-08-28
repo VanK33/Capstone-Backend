@@ -33,19 +33,19 @@ const fetchRecipeDetails = async (id) => {
       "ingredients.id"
     )
     .where("recipe_ingredient.recipes_id", id)
-    .select("ingredients.ingredient_name");
+    .pluck("ingredients.ingredient_name");
 
   // Fetch associated procedures
   recipe.procedures = await knex("procedures")
     .where("procedures.recipes_id", id)
-    .select("procedure_steps");
+    .pluck("procedure_steps");
 
   // Similarly, fetch other data like origins, meats, etc.
   // Fetch associated origins
   recipe.origins = await knex("recipes_origins")
     .join("origins", "recipes_origins.origins_id", "=", "origins.id")
     .where("recipes_origins.recipes_id", id)
-    .select("origins.origin");
+    .pluck("origins.origin");
 
   // Fetch associated meat using direct reference from recipes to meats
   if (recipe.meat_id) {
