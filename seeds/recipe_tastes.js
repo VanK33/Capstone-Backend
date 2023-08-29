@@ -92,14 +92,18 @@ exports.seed = async function (knex) {
     },
     {
       recipes_id: 15,
-      tastes_id: 1,
+      tastes_id: 3,
     },
     {
       recipes_id: 16,
       tastes_id: 1,
     },
     {
-      recipes_id: 16,
+      recipes_id: 17,
+      tastes_id: 1,
+    },
+    {
+      recipes_id: 17,
       tastes_id: 4,
     },
   ]);

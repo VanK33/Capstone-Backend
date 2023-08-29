@@ -663,5 +663,45 @@ exports.seed = async function (knex) {
       procedure_steps: "Serve with tortilla chips.",
       recipes_id: 16,
     },
+    {
+      id: 114,
+      procedure_steps:
+        "Combine lime, lemon, and orange juice in a medium mixing bowl. Reserve ½ cup of the juice mixture.",
+      recipes_id: 17,
+    },
+    {
+      id: 115,
+      procedure_steps:
+        "Cut shrimp into ½-inch pieces and mix into the citrus juice. Cover and refrigerate for at least 30 minutes until shrimp turns pink and opaque.",
+      recipes_id: 17,
+    },
+    {
+      id: 116,
+      procedure_steps:
+        "Strain the shrimp, discarding the liquid, and return shrimp to the mixing bowl.",
+      recipes_id: 17,
+    },
+    {
+      id: 117,
+      procedure_steps:
+        "Add tomatoes, red onion, cilantro, jalapeno, and salt to the bowl. Stir to combine.",
+      recipes_id: 17,
+    },
+    {
+      id: 118,
+      procedure_steps:
+        "Stir in the reserved ½ cup juice mixture. Cover and refrigerate for 30 minutes to 4 hours, stirring occasionally.",
+      recipes_id: 17,
+    },
+    {
+      id: 119,
+      procedure_steps: "Gently stir in avocado just before serving.",
+      recipes_id: 17,
+    },
+    {
+      id: 120,
+      procedure_steps: "Serve with tortilla chips.",
+      recipes_id: 17,
+    },
   ]);
 };

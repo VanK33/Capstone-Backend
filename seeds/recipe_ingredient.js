@@ -378,5 +378,65 @@ exports.seed = async function (knex) {
       recipes_id: 15,
       ingredients_id: 18,
     },
+    {
+      recipes_id: 16,
+      ingredients_id: 21,
+    },
+    {
+      recipes_id: 16,
+      ingredients_id: 22,
+    },
+    {
+      recipes_id: 16,
+      ingredients_id: 23,
+    },
+    {
+      recipes_id: 16,
+      ingredients_id: 1,
+    },
+    {
+      recipes_id: 16,
+      ingredients_id: 24,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 25,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 4,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 6,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 26,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 1,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 27,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 28,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 29,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 12,
+    },
+    {
+      recipes_id: 17,
+      ingredients_id: 30,
+    },
   ]);
 };

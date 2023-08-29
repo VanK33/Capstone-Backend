@@ -30,7 +30,7 @@ const addRecipe = async (req, res) => {
   // some forms of validations
 
   try {
-    await knex.transcation(async (trx) => {
+    await knex.transaction(async (trx) => {
       // find or add meat
       let meatId;
       if (recipeData.meat_name) {
@@ -62,13 +62,12 @@ const addRecipe = async (req, res) => {
         assocTable,
         dataColumn,
         assocDataColumn,
-        recipeIdColumn = "recipes_id",
         trx
       ) {
-        const names = data.map((item) => item.name);
-        const existingData = await trx(table)
-          .whereIn(dataColumn, names)
-          .select();
+        console.log("dataColumn", dataColumn);
+        console.log("data", data);
+        const names = data.map((item) => ({ [dataColumn]: item }));
+        const existingData = await trx(table).whereIn(names).select("*");
         const existingNames = existingData.map((item) => item[dataColumn]);
 
         const newDataNames = names.filter(
@@ -211,8 +210,8 @@ const updateRecipe = async (req, res) => {
 
 // delete
 const deleteRecipe = async (req, res) => {
-  const userId = req.params.userId;
-  const recipeId = req.params.recipeId;
+  const userId = Number(req.params.userId);
+  const recipeId = Number(req.params.recipeId);
 
   try {
     const recipes = await fetchRecipesByUser(userId);
@@ -223,15 +222,16 @@ const deleteRecipe = async (req, res) => {
     }
 
     await knex.transaction(async (trx) => {
-      await trx("procedures").where("recipe_id", recipeId).delete();
-      await trx("recipe_tastes").where("recipe_id", recipeId).delete();
-      await trx("recipes_origins").where("recipe_id", recipeId).delete();
-      await trx("recipe_ingredients").where("recipe_id", recipeId).delete();
+      await trx("procedures").where("recipes_id", recipeId).delete();
+      await trx("recipe_tastes").where("recipes_id", recipeId).delete();
+      await trx("recipes_origins").where("recipes_id", recipeId).delete();
+      await trx("recipe_ingredient").where("recipes_id", recipeId).delete();
       await trx("recipes").where("id", recipeId).delete();
     });
 
     res.status(204).json({ message: "Recipe deleted" });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ message: `Error deleting recipe ${recipeId}` });
   }
 };
