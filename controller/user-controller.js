@@ -26,8 +26,9 @@ const getUserRecipes = async (req, res) => {
 const addRecipe = async (req, res) => {
   const userId = req.params.userId;
   const recipeData = req.body;
+  // console.log(recipeData.meat_id);
+  // validation is added as a customize middleware
 
-  // some forms of validations
   try {
     await knex.transaction(async (trx) => {
       // find or add meat
@@ -174,21 +175,7 @@ const updateRecipe = async (req, res) => {
     ...rest
   } = req.body;
 
-  // back-end validation //
-  if (
-    !req.body.recipe_name ||
-    !req.body.youtube_link ||
-    !req.body.secondary_link ||
-    !req.body.meat_id ||
-    !req.body.ingredients ||
-    !req.body.origins ||
-    !req.body.tastes ||
-    !req.body.procedures
-  ) {
-    return res
-      .status(400)
-      .send("Please provide all necessary information in the request");
-  }
+  // validation is added as a customize middleware
 
   try {
     const recipeToUpdate = await knex("recipes")
