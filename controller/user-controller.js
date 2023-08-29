@@ -28,9 +28,7 @@ const addRecipe = async (req, res) => {
   const recipeData = req.body;
 
   // some forms of validations
-  console.log("Starting addRecipe...");
   try {
-    console.log("Transaction started...");
     await knex.transaction(async (trx) => {
       // find or add meat
       let meatId;
@@ -172,6 +170,7 @@ const updateRecipe = async (req, res) => {
     ingredients,
     origins,
     tastes,
+    procedures,
     ...rest
   } = req.body;
 
@@ -217,7 +216,7 @@ const updateRecipe = async (req, res) => {
           youtube_link,
           secondary_link,
           meat_id,
-          updated_at: new Date().toISOString(),
+          updated_at: Date.now(),
           ...rest,
         });
     });
@@ -225,7 +224,7 @@ const updateRecipe = async (req, res) => {
     res.status(200).json({ message: "Recipe updated successfully" });
   } catch (error) {
     console.log(error);
-    res.status(400).json({ message: `Erro updating recipe ${recipeId}` });
+    res.status(400).json({ message: `Error updating recipe ${recipeId}` });
   }
 };
 
@@ -362,7 +361,7 @@ const handleIngredientsUpdate = async (trx, recipeId, newIngredients) => {
 };
 
 const handleOriginsUpdate = async (trx, recipeId, newOrigins) => {
-  const currentOrigins = await trx("recipe_origins")
+  const currentOrigins = await trx("recipes_origins")
     .where("recipes_id", recipeId)
     .select("origins_id");
 
@@ -452,11 +451,11 @@ const handleTastesUpdate = async (trx, recipeId, newTastes) => {
 };
 
 const handleProceduresUpdate = async (trx, recipeId, newProcedures) => {
-  await trx("procedures").where("recipe_id", recipeId).delete();
+  await trx("procedures").where("recipes_id", recipeId).delete();
 
   const proceduresToInsert = newProcedures.map((procedure) => ({
-    procedure_content: procedure.content,
-    recipe_id: recipeId,
+    procedure_steps: procedure,
+    recipes_id: recipeId,
   }));
 
   await trx("procedures").insert(proceduresToInsert);

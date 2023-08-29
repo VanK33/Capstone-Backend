@@ -12,10 +12,8 @@ exports.up = function (knex) {
     table.integer("meat_id").unsigned().references("meat.id");
     table.integer("likes").notNullable();
     // future plan: Add comments for each recipe
-    table.timestamp("created_at").defaultTo(knex.fn.now());
-    table
-      .timestamp("updated_at")
-      .defaultTo(knex.raw("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"));
+    table.bigInteger("created_at").defaultTo(Date.now());
+    table.bigInteger("updated_at").defaultTo(Date.now());
   });
 };
 
