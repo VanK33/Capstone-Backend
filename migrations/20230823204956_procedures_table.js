@@ -6,7 +6,11 @@ exports.up = function (knex) {
   return knex.schema.createTable("procedures", (table) => {
     table.increments("id").primary();
     table.string("procedure_steps").notNullable();
-    table.integer("recipes_id").unsigned().references("recipes.id");
+    table
+      .integer("recipes_id")
+      .unsigned()
+      .references("recipes.id")
+      .onDelete("CASCADE");
   });
 };
 

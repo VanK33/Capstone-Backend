@@ -28,8 +28,9 @@ const addRecipe = async (req, res) => {
   const recipeData = req.body;
 
   // some forms of validations
-
+  console.log("Starting addRecipe...");
   try {
+    console.log("Transaction started...");
     await knex.transaction(async (trx) => {
       // find or add meat
       let meatId;
@@ -62,20 +63,37 @@ const addRecipe = async (req, res) => {
         assocTable,
         dataColumn,
         assocDataColumn,
-        trx
+        trx,
+        recipeIdColumn
       ) {
-        console.log("dataColumn", dataColumn);
-        console.log("data", data);
-        const names = data.map((item) => ({ [dataColumn]: item }));
-        const existingData = await trx(table).whereIn(names).select("*");
+        const names = data;
+        console.log("Data for table", table, ":", data);
+
+        const existingData = await trx(table)
+          .whereIn(dataColumn, data)
+          .select("*");
         const existingNames = existingData.map((item) => item[dataColumn]);
 
         const newDataNames = names.filter(
           (name) => !existingNames.includes(name)
         );
-        const newDataIds = await trx(table)
-          .insert(newDataNames.map((name) => ({ [dataColumn]: name })))
-          .returning("id");
+
+        const newDataIds = [];
+        if (newDataNames.length > 0) {
+          await trx(table).insert(
+            newDataNames.map((name) => ({ [dataColumn]: name }))
+          );
+
+          const [insertedRow] = await trx.raw("SELECT LAST_INSERT_ID() as id");
+          const lastInsertId = insertedRow.id;
+
+          newDataIds.push(
+            ...Array.from(
+              { length: newDataNames.length },
+              (_, i) => lastInsertId - i
+            ).reverse()
+          );
+        }
 
         const existingAssocs = existingData.map((item) => ({
           [recipeIdColumn]: newRecipeId,
@@ -97,40 +115,43 @@ const addRecipe = async (req, res) => {
         "recipe_ingredient",
         "ingredient_name",
         "ingredients_id",
-        trx
+        trx,
+        "recipes_id"
       );
 
       // Handle origins with transaction instance (trx)
       await handleAssociations(
         recipeData.origins,
         "origins",
-        "recipe_origins",
-        "origin_name",
+        "recipes_origins",
+        "origin",
         "origins_id",
-        trx
+        trx,
+        "recipes_id"
       );
-
       // Handle tastes with transaction instance (trx)
       await handleAssociations(
         recipeData.tastes,
         "tastes",
-        "recipes_tastes",
+        "recipe_tastes",
         "taste_name",
         "tastes_id",
-        trx
+        trx,
+        "recipes_id"
       );
 
       // Handle procedures (many-to-one association with recipe)
       if (recipeData.procedures && recipeData.procedures.length) {
         const proceduresToInsert = recipeData.procedures.map((proc) => ({
-          description: proc,
-          recipe_id: newRecipeId,
+          procedure_steps: proc,
+          recipes_id: newRecipeId,
         }));
-        await knex("procedures").insert(proceduresToInsert);
+        try {
+          await trx("procedures").insert(proceduresToInsert);
+        } catch (error) {}
       }
       return;
     });
-
     res.status(201).json({ message: "recipe uploaded successfully" });
   } catch (error) {
     console.log(error);
@@ -221,14 +242,7 @@ const deleteRecipe = async (req, res) => {
       return res.status(404).json({ error: "Recipe not found" });
     }
 
-    await knex.transaction(async (trx) => {
-      await trx("procedures").where("recipes_id", recipeId).delete();
-      await trx("recipe_tastes").where("recipes_id", recipeId).delete();
-      await trx("recipes_origins").where("recipes_id", recipeId).delete();
-      await trx("recipe_ingredient").where("recipes_id", recipeId).delete();
-      await trx("recipes").where("id", recipeId).delete();
-    });
-
+    await knex("recipes").where("id", recipeId).delete();
     res.status(204).json({ message: "Recipe deleted" });
   } catch (error) {
     console.log(error);
@@ -276,6 +290,12 @@ const fetchRecipesByUser = async (userId) => {
         .join("origins", "recipes_origins.origins_id", "=", "origins.id")
         .where("recipes_origins.recipes_id", recipeDetails.id)
         .pluck("origins.origin");
+
+      // Fetch associated tastes
+      recipeDetails.tastes = await knex("recipe_tastes")
+        .join("tastes", "recipe_tastes.tastes_id", "=", "tastes.id")
+        .where("recipe_tastes.recipes_id", recipeDetails.id)
+        .pluck("tastes.taste_name");
 
       // Fetch associated meat using direct reference from recipes to meats
       if (recipeDetails.meat_id) {

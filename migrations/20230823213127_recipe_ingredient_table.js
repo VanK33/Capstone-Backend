@@ -4,8 +4,17 @@
  */
 exports.up = function (knex) {
   return knex.schema.createTable("recipe_ingredient", function (table) {
-    table.integer("recipes_id").unsigned().references("recipes.id");
-    table.integer("ingredients_id").unsigned().references("ingredients.id");
+    table
+      .integer("recipes_id")
+      .unsigned()
+      .references("recipes.id")
+      .onDelete("CASCADE");
+    table
+      .integer("ingredients_id")
+      .unsigned()
+      .references("ingredients.id")
+      .onDelete("CASCADE");
+    table.primary(["recipes_id", "ingredients_id"]);
   });
 };
 
