@@ -1,5 +1,7 @@
 const knex = require("knex")(require("../knexfile"));
 const verifyToken = require("../middleware/auth-middleware");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 const signUp = async (req, res) => {
   try {
@@ -37,21 +39,30 @@ const signUp = async (req, res) => {
   }
 };
 
-const logIn = async (_req, res) => {
+const logIn = async (req, res) => {
   try {
+    const { username, password } = req.body;
+
     const user = await knex("contributors").where("username", username).first();
 
     if (!user) {
       return res.status(401).json({
-        message: "invalid credentails",
+        message: "invalid credentails - user",
       });
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+    console.log("password", password);
+    console.log("user.hashed", user.hashed_password);
+
+    // const hashed = bcrypt.hashSync(password, 10);
+    // console.log(hashed);
+
+    const passwordMatch = bcrypt.compareSync(password, user.hashed_password);
+    console.log(passwordMatch);
 
     if (!passwordMatch) {
       return res.status(401).json({
-        message: "invalid credentails",
+        message: "invalid credentails - password",
       });
     }
 
@@ -71,7 +82,7 @@ const logIn = async (_req, res) => {
 };
 
 const getProfile = async (req, res) => {
-  const { id, username } = req.user;
+  const { id, username, contributor_name } = req.user;
 
   const user = await knex("contributors").where("id", id).first();
   if (!user) {
@@ -79,8 +90,8 @@ const getProfile = async (req, res) => {
   }
 
   const userProfile = {
-    id: user.id,
-    username: user.username,
+    id: id,
+    username: username,
     contributor_name: user.contributor_name,
     // TODO: if future add more content related to the user
     // remeber to link them here.
