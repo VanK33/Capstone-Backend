@@ -19,6 +19,19 @@ const getRecipeList = (req, res) => {
     });
 };
 
+const getRecipeDetails = async (req, res) => {
+  const recipeId = req.params.recipeId;
+  try {
+    const recipe = await fetchRecipeDetails(recipeId);
+    res.status(200).json(recipe);
+  } catch (error) {
+    console.log("Error fetching recipe details:", error);
+    res
+      .status(400)
+      .send(`Error fetching recipe details for recipe ${recipeId}`);
+  }
+};
+
 const editRecipeLike = async (req, res) => {
   const recipeId = req.params.recipeId;
 
@@ -88,4 +101,5 @@ const fetchRecipeDetails = async (id) => {
 module.exports = {
   getRecipeList,
   editRecipeLike,
+  getRecipeDetails,
 };

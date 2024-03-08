@@ -4,7 +4,7 @@ const publicController = require("../controller/public-controller");
 // TODO for future2: Add displaying comments for get
 publicRoute.route("/").get(publicController.getRecipeList);
 
-// TODO: a route to check specific specific recipe
+publicRoute.route("/:recipeId").get(publicController.getRecipeDetails);
 publicRoute.route("/:recipeId").put(publicController.editRecipeLike);
 
 // TOOD for future0: Add search functionality

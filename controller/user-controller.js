@@ -34,7 +34,7 @@ const addRecipe = async (req, res) => {
   //     // handle an unknown error occured when uploading.
   //     return res.status(500).json({ message: "Unknown error" });
   //   }
-  // try {
+
   //   /*
   //   For testing purpose
   //   console.log("everything is fine");
@@ -45,15 +45,10 @@ const addRecipe = async (req, res) => {
   //   console.log(recipeData.meat);
   //   console.log(userId);
   //   */
-  //   return res.status(200).json({ message: "Everything is fine" });
-  // } catch (error) {
-  //   console.log(error);
-  //   res.status(400).json({ message: `Error uploading recipe` });
-  // }
+
   // Everything went fine
   const userId = req.params.userId;
   const recipeData = req.body;
-  const recipeImage = req.file;
   console.log(recipeData.meat_id);
   // validation is added as a customize middleware
 
