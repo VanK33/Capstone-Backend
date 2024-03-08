@@ -1,4 +1,7 @@
+const e = require("express");
+const multer = require("multer");
 const knex = require("knex")(require("../knexfile"));
+const upload = multer({ dest: "uploads/" });
 
 // TODO for future2: Add displaying comments for get
 
@@ -24,22 +27,48 @@ const getUserRecipes = async (req, res) => {
 // TODO for future2: check add/update/detele function as well
 // add
 const addRecipe = async (req, res) => {
+  // upload.single("recipeImage")(req, res, async (err) => {
+  //   if (err instanceof multer.MulterError) {
+  //     return res.status(500).json({ message: "Multer error" });
+  //   } else if (err) {
+  //     // handle an unknown error occured when uploading.
+  //     return res.status(500).json({ message: "Unknown error" });
+  //   }
+  // try {
+  //   /*
+  //   For testing purpose
+  //   console.log("everything is fine");
+  //   const userId = req.params.userId;
+  //   const recipeData = req.body;
+  //   const recipeImage = req.file;
+  //   console.log(recipeData.recipe_name);
+  //   console.log(recipeData.meat);
+  //   console.log(userId);
+  //   */
+  //   return res.status(200).json({ message: "Everything is fine" });
+  // } catch (error) {
+  //   console.log(error);
+  //   res.status(400).json({ message: `Error uploading recipe` });
+  // }
+  // Everything went fine
   const userId = req.params.userId;
   const recipeData = req.body;
-  // console.log(recipeData.meat_id);
+  const recipeImage = req.file;
+  console.log(recipeData.meat_id);
   // validation is added as a customize middleware
 
+  // temparariliy commented out for testing mutler middleware functionality
   try {
     await knex.transaction(async (trx) => {
       // find or add meat
       let meatId;
-      if (recipeData.meat_name) {
+      if (recipeData.meat) {
         const meatExists = await trx("meat")
-          .where("meat_name", recipeData.meat_name)
+          .where("meat_name", recipeData.meat)
           .first();
         if (!meatExists) {
           [meatId] = await trx("meat")
-            .insert({ meat_name: recipeData.meat_name })
+            .insert({ meat_name: recipeData.meat })
             .returning("id");
         } else {
           meatId = meatExists.id;
@@ -53,6 +82,7 @@ const addRecipe = async (req, res) => {
         secondary_link: recipeData.secondary_link,
         meat_id: meatId,
         likes: 0,
+        // recipe_image: recipeImage.filename,
       });
 
       // Function to handle many-to-many associations
@@ -156,6 +186,7 @@ const addRecipe = async (req, res) => {
     console.log(error);
     res.status(400).json({ message: `Error uploading recipe` });
   }
+  // });
 };
 
 // update

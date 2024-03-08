@@ -17,8 +17,6 @@ function validateRecipeInput(req, res, next) {
   if (
     !recipe_name ||
     !youtube_link ||
-    !secondary_link ||
-    !meat_name ||
     !ingredients ||
     !procedures ||
     !origins ||
