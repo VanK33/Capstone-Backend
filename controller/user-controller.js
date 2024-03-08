@@ -27,14 +27,6 @@ const getUserRecipes = async (req, res) => {
 // TODO for future2: check add/update/detele function as well
 // add
 const addRecipe = async (req, res) => {
-  // upload.single("recipeImage")(req, res, async (err) => {
-  //   if (err instanceof multer.MulterError) {
-  //     return res.status(500).json({ message: "Multer error" });
-  //   } else if (err) {
-  //     // handle an unknown error occured when uploading.
-  //     return res.status(500).json({ message: "Unknown error" });
-  //   }
-
   //   /*
   //   For testing purpose
   //   console.log("everything is fine");
