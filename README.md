@@ -85,6 +85,27 @@ http://127.0.0.1:5050/
   * Endpoint: `/public`
   * Description: Retrieve a list of all recipes in the database, including their associated details.
   * Response: An array of recipe objects with their details.
+    ```json
+    [
+      {
+        "id" : [Integer],
+        "contributor_id" : [Integer],
+        "recipe_name" : [String],
+        "youtube_link" : [String],
+        "secondary_link" : [String/Null],
+        "likes" : [Integer],
+        "meat_id" : [Integer],
+        "created_at" : [Integer],
+        "updated_at" : [Integer],
+        "ingredients" : [Array of Strings],
+        "procedures" : [Array of Strings],
+        "origins" : [Array of Strings],
+        "tastes" : [Array of Strings],
+        "meat" : [String]
+      },
+      ...rest  
+    ]
+    ```
 
 **Get Recipe Details**
 2. Method: `GET`
@@ -93,6 +114,26 @@ http://127.0.0.1:5050/
   * Parameters:
     * recipeId (path): The ID of the recipe whose details are being requested.
   * Response: A recipe object with its associated details.
+    ```json
+    [
+      {
+        "id" : [Integer],
+        "contributor_id" : [Integer],
+        "recipe_name" : [String],
+        "youtube_link" : [String],
+        "secondary_link" : [String/Null],
+        "likes" : [Integer],
+        "meat_id" : [Integer],
+        "created_at" : [Integer],
+        "updated_at" : [Integer],
+        "ingredients" : [Array of Strings],
+        "procedures" : [Array of Strings],
+        "origins" : [Array of Strings],
+        "tastes" : [Array of Strings],
+        "meat" : [String]
+      }
+    ]
+    ```
 
 **Edit Recipe Like**
 3. Method: `PUT`
@@ -110,7 +151,27 @@ http://127.0.0.1:5050/
   * Description: Retrieves all recipes created by a specific user.
   * Parameters:
     * userId (path): The ID of the user whose recipes are being requested.
-  * Response: An array of recipes with their details.
+  * Response: An array of recipes with their details. Expected Return Example:
+    ```json
+    [
+      {
+        "id" : [Integer],
+        "recipe_name" : [String],
+        "youtube_link" : [String],
+        "secondary_link" : [String/Null],
+        "likes" : [Integer],
+        "meat_id" : [Integer],
+        "created_at" : [Integer],
+        "updated_at" : [Integer],
+        "ingredients" : [Array of Strings],
+        "procedures" : [Array of Strings],
+        "origins" : [Array of Strings],
+        "tastes" : [Array of Strings],
+        "meat" : [String]
+      },
+      ...rest  
+    ]
+    ```
 
 **Add Recipe**
 2. Method: `POST`
@@ -119,6 +180,18 @@ http://127.0.0.1:5050/
   * Parameters:
     * userId (path): The ID of the user adding the recipe.
     * Request Body: JSON object containing the recipe details.
+      ```json
+      {
+        "recipe_name" : [String],
+        "youtube_link" : [String],
+        "secondary_link" : [String/Null],
+        "ingredients" : [Array of Strings],
+        "procedures" : [Array of Strings],
+        "origins" : [Array of Strings],
+        "tastes" : [Array of Strings],
+        "meat" : [String]
+      },
+      ```
   * Response: A success message indicating the recipe was uploaded successfully.
 
 **Update Recipe**
